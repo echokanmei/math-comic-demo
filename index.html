@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>小和的奇妙数学之旅</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2f6fb0">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+  :root{
+    --sky:#2f6fb0;
+    --sky-deep:#1c4a7a;
+    --wheat:#e7b957;
+    --wheat-deep:#c8933a;
+    --cream:#fbf3e1;
+    --ink:#2b2418;
+    --paper:#f6ecd2;
+    --paper-line:#d9c79a;
+    --terracotta:#c9682f;
+    --good:#4f9d5f;
+    font-family: "PingFang SC","Heiti SC","Microsoft YaHei","HanaMinA",sans-serif;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0; padding:0; height:100%; overflow:hidden;
+    background:var(--sky-deep);
+    color:var(--ink);
+  }
+  #app{
+    position:fixed; inset:0;
+    display:flex; flex-direction:column;
+    background:linear-gradient(180deg,#173a5e,#0f1f33 120%);
+  }
+
+  /* ---------- top bar ---------- */
+  #topbar{
+    position:relative; z-index:20;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
+    color:#fff;
+  }
+  #topbar .title{
+    font-size:14px; font-weight:600; opacity:.9;
+    letter-spacing:.5px;
+  }
+  #dots{
+    display:flex; gap:5px; justify-content:center; flex:1;
+  }
+  #dots span{
+    width:6px; height:6px; border-radius:50%;
+    background:rgba(255,255,255,.28);
+    transition:all .25s;
+  }
+  #dots span.active{
+    background:var(--wheat); width:16px; border-radius:4px;
+  }
+  #pagecount{ font-size:12px; opacity:.75; min-width:38px; text-align:right;}
+
+  /* ---------- viewer ---------- */
+  #viewer{
+    position:relative; flex:1; overflow:hidden;
+  }
+  #track{
+    position:absolute; inset:0;
+    display:flex;
+    height:100%;
+    transition:transform .38s cubic-bezier(.22,.68,.36,1);
+    will-change:transform;
+  }
+  .page{
+    position:relative;
+    flex:0 0 100%;
+    height:100%;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .page img{
+    max-width:100%; max-height:100%;
+    width:auto; height:auto;
+    object-fit:contain;
+    user-select:none; -webkit-user-drag:none;
+    box-shadow:0 10px 40px rgba(0,0,0,.45);
+  }
+
+  /* hotspot */
+  .hotspot{
+    position:absolute;
+    width:36px; height:36px;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    border:2px solid #fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:15px; font-weight:800;
+    color:#fff;
+    cursor:pointer;
+    font-family:"PingFang SC","Microsoft YaHei",sans-serif;
+    animation:pulse-jie 2.2s infinite;
+  }
+  .hotspot:active{ transform:translate(-50%,-50%) scale(.9); }
+
+  /* 解 = 知识解释：蓝色 */
+  .hotspot.type-jie{
+    background:radial-gradient(circle at 35% 30%, #6fa8dd, var(--sky) 60%, var(--sky-deep));
+    animation-name:pulse-jie;
+  }
+  /* 史 = 数学历史：暗红印章风格，双层边框模拟"印章" */
+  .hotspot.type-shi{
+    background:radial-gradient(circle at 35% 30%, #c06a4e, var(--terracotta) 60%, #8a3f1e);
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.55);
+    animation-name:pulse-shi;
+  }
+  @keyframes pulse-jie{
+    0%{ box-shadow:0 3px 10px rgba(0,0,0,.4), 0 0 0 0 rgba(47,111,176,.55);}
+    70%{ box-shadow:0 3px 10px rgba(0,0,0,.4), 0 0 0 14px rgba(47,111,176,0);}
+    100%{ box-shadow:0 3px 10px rgba(0,0,0,.4), 0 0 0 0 rgba(47,111,176,0);}
+  }
+  @keyframes pulse-shi{
+    0%{ box-shadow:0 3px 10px rgba(0,0,0,.4), inset 0 0 0 2px rgba(255,255,255,.55), 0 0 0 0 rgba(201,104,47,.55);}
+    70%{ box-shadow:0 3px 10px rgba(0,0,0,.4), inset 0 0 0 2px rgba(255,255,255,.55), 0 0 0 14px rgba(201,104,47,0);}
+    100%{ box-shadow:0 3px 10px rgba(0,0,0,.4), inset 0 0 0 2px rgba(255,255,255,.55), 0 0 0 0 rgba(201,104,47,0);}
+  }
+
+  /* 图例（第一次出现时提示两种卡片的区别） */
+  #legend{
+    position:absolute; top:8px; left:50%; transform:translateX(-50%);
+    display:flex; gap:14px; background:rgba(0,0,0,.35); backdrop-filter:blur(3px);
+    padding:6px 14px; border-radius:20px; z-index:16;
+    font-size:11.5px; color:#fff; opacity:0; pointer-events:none; transition:opacity .4s;
+  }
+  #legend.show{ opacity:1; }
+  #legend .item{ display:flex; align-items:center; gap:5px; }
+  #legend .chip{
+    width:18px; height:18px; border-radius:50%; color:#fff; font-size:10px; font-weight:800;
+    display:flex; align-items:center; justify-content:center; border:1.5px solid #fff;
+  }
+  #legend .chip.jie{ background:var(--sky); }
+  #legend .chip.shi{ background:var(--terracotta); }
+
+  /* nav arrows (desktop convenience) */
+  .navbtn{
+    position:absolute; top:50%; transform:translateY(-50%);
+    width:38px; height:38px; border-radius:50%;
+    background:rgba(0,0,0,.28); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px; z-index:15; cursor:pointer; user-select:none;
+    backdrop-filter:blur(2px);
+  }
+  #prevBtn{ left:10px; } #nextBtn{ right:10px; }
+  .navbtn.hide{ opacity:0; pointer-events:none; }
+
+  /* swipe hint */
+  #hint{
+    position:absolute; left:0; right:0; bottom:14px;
+    text-align:center; color:rgba(255,255,255,.6); font-size:12px;
+    pointer-events:none; transition:opacity .4s;
+  }
+
+  /* ---------- knowledge sheet ---------- */
+  #overlay{
+    position:fixed; inset:0; background:rgba(20,15,8,.55);
+    opacity:0; pointer-events:none; transition:opacity .25s;
+    z-index:30;
+  }
+  #overlay.show{ opacity:1; pointer-events:auto; }
+
+  #sheet{
+    position:fixed; left:0; right:0; bottom:0;
+    max-height:82%;
+    background:var(--paper);
+    border-radius:20px 20px 0 0;
+    box-shadow:0 -10px 30px rgba(0,0,0,.4);
+    transform:translateY(105%);
+    transition:transform .32s cubic-bezier(.22,.68,.36,1);
+    z-index:31;
+    padding-bottom:env(safe-area-inset-bottom);
+    display:flex; flex-direction:column;
+    background-image: repeating-linear-gradient(var(--paper) 0 27px, var(--paper-line) 27px 28px);
+    background-attachment:local;
+  }
+  #sheet.show{ transform:translateY(0); }
+  #sheet .grabber{
+    width:38px; height:4px; border-radius:2px; background:var(--paper-line);
+    margin:10px auto 4px;
+  }
+  #sheetHead{
+    display:flex; align-items:flex-start; gap:10px;
+    padding:10px 20px 4px;
+  }
+  #sheetHead .badge{
+    flex:0 0 auto; width:34px; height:34px; border-radius:10px;
+    background:var(--sky); color:#fff; font-size:16px; font-weight:800;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 3px 0 var(--sky-deep);
+  }
+  #sheetHead .badge.type-shi{ background:var(--terracotta); box-shadow:0 3px 0 #8a3f1e; }
+  #sheetTitle{ font-size:19px; font-weight:800; color:var(--ink); line-height:1.3; padding-top:4px;}
+  #closeSheet{
+    margin-left:auto; width:28px; height:28px; border-radius:50%;
+    background:rgba(0,0,0,.08); display:flex; align-items:center; justify-content:center;
+    font-size:14px; color:#665; flex:0 0 auto; cursor:pointer;
+  }
+  #sheetBody{
+    padding:6px 20px 26px; overflow-y:auto; font-size:15px; line-height:1.75; color:#3a2f1e;
+  }
+  #sheetBody p{ margin:0 0 12px; }
+  #sheetBody .tag{
+    display:inline-block; font-size:12px; color:var(--terracotta);
+    background:rgba(201,104,47,.12); padding:2px 9px; border-radius:20px;
+    margin-bottom:10px; font-weight:600;
+  }
+
+  /* ---- widget: step reveal (加减法) ---- */
+  .stepbox{
+    background:#fffef8; border:1.5px solid var(--paper-line); border-radius:12px;
+    padding:14px; margin:10px 0 14px;
+  }
+  .vcalc{
+    font-family:"SF Mono",Consolas,monospace; font-size:26px; text-align:right;
+    letter-spacing:2px; line-height:1.5; width:120px; margin:0 auto 10px;
+    position:relative;
+  }
+  .vcalc .line{ border-top:2.5px solid var(--ink); margin-top:2px; }
+  .vcalc .carry{ font-size:13px; color:var(--terracotta); height:16px; text-align:left; letter-spacing:8px;}
+  .stepline{
+    font-size:14px; color:#5b4c33; min-height:20px; text-align:center; margin-bottom:10px;
+  }
+  .stepbtns{ display:flex; gap:10px; justify-content:center; }
+  .btn{
+    appearance:none; border:none; border-radius:10px;
+    background:var(--sky); color:#fff; font-size:14px; font-weight:600;
+    padding:9px 16px; cursor:pointer; box-shadow:0 3px 0 var(--sky-deep);
+  }
+  .btn:active{ transform:translateY(2px); box-shadow:0 1px 0 var(--sky-deep); }
+  .btn.secondary{ background:#efe4c4; color:#7a5f30; box-shadow:0 3px 0 #cbb886; }
+
+  /* ---- widget: stone counting ---- */
+  .stonewrap{
+    background:#fffef8; border:1.5px solid var(--paper-line); border-radius:12px;
+    padding:16px; margin:10px 0 14px; text-align:center;
+  }
+  .pouch{
+    min-height:54px; border:2px dashed #b79a5a; border-radius:12px;
+    display:flex; flex-wrap:wrap; align-items:center; justify-content:center;
+    gap:6px; padding:8px; margin-bottom:12px; background:#faf4e2;
+  }
+  .stone{
+    width:16px; height:16px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#9a9a9a,#5c5c5c);
+    box-shadow:inset 0 -2px 2px rgba(0,0,0,.3);
+    animation:pop .25s ease;
+  }
+  @keyframes pop{ from{ transform:scale(0);} to{ transform:scale(1);} }
+  .stonebtns{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .counthint{ font-size:13px; color:#7a6a45; margin-top:10px; min-height:18px; font-weight:600;}
+  .counthint.good{ color:var(--good); }
+  .counthint.bad{ color:#c94f4f; }
+
+  #installTip{
+    position:fixed; left:14px; right:14px; bottom:calc(14px + env(safe-area-inset-bottom));
+    background:rgba(0,0,0,.75); color:#fff; font-size:12.5px; line-height:1.5;
+    padding:10px 14px; border-radius:12px; z-index:5; display:none;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="topbar">
+    <div class="title">小和的奇妙数学之旅</div>
+    <div id="dots"></div>
+    <div id="pagecount">1 / 8</div>
+  </div>
+
+  <div id="viewer">
+    <div id="track"></div>
+    <div class="navbtn" id="prevBtn">‹</div>
+    <div class="navbtn" id="nextBtn">›</div>
+    <div id="legend">
+      <div class="item"><span class="chip shi">史</span>数学历史</div>
+      <div class="item"><span class="chip jie">解</span>知识讲解</div>
+    </div>
+    <div id="hint">左右滑动翻页 · 点击圆点查看知识卡</div>
+  </div>
+
+</div>
+
+<div id="overlay"></div>
+<div id="sheet">
+  <div class="grabber"></div>
+  <div id="sheetHead">
+    <div class="badge type-jie">解</div>
+    <div id="sheetTitle">知识讲解</div>
+    <div id="closeSheet">✕</div>
+  </div>
+  <div id="sheetBody"></div>
+</div>
+
+<script>
+/* ---------------------------------------------------
+   数据：页面 + 知识点热区
+   （demo 只在第 6、7 页放了示例热区，展示交互形式）
+---------------------------------------------------- */
+const PAGES = [
+  { src:'images/page-1.jpg', hotspots:[] }, // 封面
+  { src:'images/page-2.jpg', hotspots:[] },
+  { src:'images/page-3.jpg', hotspots:[] },
+  { src:'images/page-4.jpg', hotspots:[] },
+  { src:'images/page-5.jpg', hotspots:[] },
+  { src:'images/page-6.jpg', hotspots:[] },
+  { src:'images/page-7.jpg', hotspots:[
+      { x:88, y:48, type:'jie', card:'oneToOne' },
+      { x:88, y:81, type:'shi', card:'tokenHistory' },
+    ]},
+  { src:'images/page-8.jpg', hotspots:[
+      { x:88, y:15, type:'jie', card:'addCarry' },
+      { x:88, y:48, type:'jie', card:'subBorrow' },
+      { x:88, y:81, type:'shi', card:'placeValueHistory' },
+    ]},
+];
+
+const CARDS = {
+
+  /* ============ 解：知识讲解（原理/怎么算） ============ */
+
+  oneToOne:{
+    type:'jie',
+    title:'一一对应：不用数数也能比多少',
+    tag:'知识讲解 · 计数的原理',
+    render(body){
+      body.innerHTML = `
+        <p>小和让每只羊出门时都放一颗石子进袋子——这就是数学里最基本的思想之一：<b>一一对应</b>。</p>
+        <p>一只羊对应一颗石子，石子和羊的数量就"绑"在了一起。只要这个对应关系没被破坏，两边的数量就一定相等——哪怕小和压根不会数数、不知道到底是"38只"还是"39只"，也完全不耽误她判断羊有没有少。</p>
+        <p>动手试试下面的小袋子——点"羊出门"放一颗石子，点"羊回家"拿走一颗，看看石子还剩多少颗：</p>
+        <div class="stonewrap" id="stoneWidget"></div>
+      `;
+      mountStoneWidget(body.querySelector('#stoneWidget'));
+    }
+  },
+
+  addCarry:{
+    type:'jie',
+    title:'进位加法：15 + 28',
+    tag:'知识讲解 · 加法竖式',
+    render(body){
+      body.innerHTML = `
+        <p>把两个数字按位对齐，从<b>个位</b>开始算起，满十就往前一位"进 1"：</p>
+        <div class="stepbox">
+          <div class="vcalc" id="addCalc">
+            <div class="carry" id="addCarry">&nbsp;</div>
+            <div>15</div>
+            <div>+28</div>
+            <div class="line"></div>
+            <div id="addResult">??</div>
+          </div>
+          <div class="stepline" id="addStepline">点击"下一步"，跟着小和一起算一算</div>
+          <div class="stepbtns">
+            <button class="btn secondary" id="addReset">重来</button>
+            <button class="btn" id="addNext">下一步</button>
+          </div>
+        </div>
+      `;
+      mountAddWidget(body);
+    }
+  },
+
+  subBorrow:{
+    type:'jie',
+    title:'退位减法：42 − 15',
+    tag:'知识讲解 · 减法竖式',
+    render(body){
+      body.innerHTML = `
+        <p>个位不够减的时候，就向十位"借 1"，借来的 1 在这一位要按十来用：</p>
+        <div class="stepbox">
+          <div class="vcalc" id="subCalc">
+            <div class="carry" id="subCarry">&nbsp;</div>
+            <div>42</div>
+            <div>-15</div>
+            <div class="line"></div>
+            <div id="subResult">??</div>
+          </div>
+          <div class="stepline" id="subStepline">点击"下一步"，跟着小和一起算一算</div>
+          <div class="stepbtns">
+            <button class="btn secondary" id="subReset">重来</button>
+            <button class="btn" id="subNext">下一步</button>
+          </div>
+        </div>
+      `;
+      mountSubWidget(body);
+    }
+  },
+
+  /* ============ 史：数学历史（真实历史考据） ============ */
+
+  tokenHistory:{
+    type:'shi',
+    title:'结绳记账：文字发明之前的"数学"',
+    tag:'数学史 · 计数的起源',
+    render(body){
+      body.innerHTML = `
+        <p>人类最早的数学痕迹不是数字，而是骨头上的刻痕。南非出土的<b>莱邦博骨</b>距今约 4.3 万年，上面刻着 29 道整齐的痕迹，很多学者认为它是用来记录月相或天数的"日历棒"。大约 2 万年前，刚果出土的<b>伊尚戈骨</b>上刻着更复杂的分组痕迹，说明当时的人已经不只是划道道，而是在有意分组、比较数量了。</p>
+        <p>真正和小和的做法几乎一模一样的，是大约公元前 8000 年两河流域（今天的伊拉克一带）的农民和牧民：他们用不同形状的小泥块来记账——一颗泥球代表一份粮食，一个泥锥代表一只羊，装进泥袋子里保存。这套系统直到 20 世纪才被考古学家丹妮丝·施曼特-贝瑟拉破解出来。</p>
+        <p>更神奇的是：大约公元前 3200 年，人们开始把这些泥块的形状直接印在泥板上做记录，这些印记后来演变成了<b>楔形文字</b>——人类最早的文字之一。也就是说，人类是先学会了"记数"，很久很久以后才发明了"写字"。</p>
+      `;
+    }
+  },
+
+  placeValueHistory:{
+    type:'shi',
+    title:'从印度到欧洲：竖式算法走了 1500 年',
+    tag:'数学史 · 位值计数法',
+    render(body){
+      body.innerHTML = `
+        <p>我们今天用的"个位、十位、逢十进一"，数学上叫<b>十进位值制</b>——数字所在的位置决定了它的价值。这套系统是公元 5～7 世纪由印度数学家逐渐发展成熟的：天文学家阿耶波多（约公元 476 年生）的著作里已经用到了位值记数法；大约公元 628 年，数学家婆罗摩笈多第一次系统写下了"0"该怎么作为一个真正的数字参与加减运算。</p>
+        <p>公元 9 世纪，阿拉伯数学家<b>花拉子米</b>把这套方法写成专著介绍给伊斯兰世界，后来这本书被翻译成拉丁文传入欧洲——"算法"（algorithm）这个词，就来自他名字的拉丁拼写。</p>
+        <p>1202 年，意大利数学家<b>斐波那契</b>出版《计算之书》，系统地把这套数字和竖式运算方法介绍给欧洲商人，才逐渐取代了此前又笨重又难心算的罗马数字。</p>
+        <p>换句话说，小和和哥哥在牧场上"发明"的这套竖式算法，人类实际上足足摸索、传播了一千五百多年才变成今天课本里的样子。</p>
+      `;
+    }
+  }
+};
+
+/* ---------------------------------------------------
+   翻页逻辑
+---------------------------------------------------- */
+const track = document.getElementById('track');
+const dotsEl = document.getElementById('dots');
+const pagecountEl = document.getElementById('pagecount');
+let current = 0;
+
+PAGES.forEach((p, i) => {
+  const div = document.createElement('div');
+  div.className = 'page';
+  const img = document.createElement('img');
+  img.src = p.src;
+  img.draggable = false;
+  div.appendChild(img);
+  p.hotspots.forEach(h => {
+    const dot = document.createElement('div');
+    dot.className = 'hotspot type-' + h.type;
+    dot.style.left = h.x + '%';
+    dot.style.top = h.y + '%';
+    dot.textContent = h.type === 'shi' ? '史' : '解';
+    dot.addEventListener('click', (e) => { e.stopPropagation(); openCard(h.card); });
+    div.appendChild(dot);
+  });
+  track.appendChild(div);
+
+  const dot = document.createElement('span');
+  dotsEl.appendChild(dot);
+});
+
+function render(){
+  track.style.transform = `translateX(-${current*100}%)`;
+  [...dotsEl.children].forEach((d,i)=>d.classList.toggle('active', i===current));
+  pagecountEl.textContent = `${current+1} / ${PAGES.length}`;
+  document.getElementById('prevBtn').classList.toggle('hide', current===0);
+  document.getElementById('nextBtn').classList.toggle('hide', current===PAGES.length-1);
+  const legend = document.getElementById('legend');
+  if(PAGES[current].hotspots.length){
+    legend.classList.add('show');
+  } else {
+    legend.classList.remove('show');
+  }
+}
+function goTo(i){
+  current = Math.max(0, Math.min(PAGES.length-1, i));
+  render();
+}
+document.getElementById('prevBtn').addEventListener('click', ()=>goTo(current-1));
+document.getElementById('nextBtn').addEventListener('click', ()=>goTo(current+1));
+window.addEventListener('keydown', (e)=>{
+  if(e.key==='ArrowRight') goTo(current+1);
+  if(e.key==='ArrowLeft') goTo(current-1);
+});
+
+/* touch swipe */
+let touchStartX = null, touchStartY = null, dragging=false;
+const viewer = document.getElementById('viewer');
+viewer.addEventListener('touchstart', e=>{
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+  dragging = true;
+  track.style.transition = 'none';
+},{passive:true});
+viewer.addEventListener('touchmove', e=>{
+  if(!dragging) return;
+  const dx = e.touches[0].clientX - touchStartX;
+  track.style.transform = `translateX(calc(-${current*100}% + ${dx}px))`;
+},{passive:true});
+viewer.addEventListener('touchend', e=>{
+  if(!dragging) return;
+  dragging = false;
+  track.style.transition = '';
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  if(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)){
+    if(dx < 0) goTo(current+1); else goTo(current-1);
+  } else {
+    render();
+  }
+});
+
+/* hide hint after a while */
+setTimeout(()=>{ document.getElementById('hint').style.opacity = 0; }, 3500);
+
+render();
+
+/* ---------------------------------------------------
+   知识卡 sheet
+---------------------------------------------------- */
+const overlay = document.getElementById('overlay');
+const sheet = document.getElementById('sheet');
+const sheetTitle = document.getElementById('sheetTitle');
+const sheetBody = document.getElementById('sheetBody');
+
+const sheetBadge = document.querySelector('#sheetHead .badge');
+function openCard(id){
+  const c = CARDS[id];
+  if(!c) return;
+  sheetBadge.className = 'badge type-' + c.type;
+  sheetBadge.textContent = c.type === 'shi' ? '史' : '解';
+  sheetTitle.innerHTML = `${c.title}${c.tag ? `<br><span class="tag">${c.tag}</span>` : ''}`;
+  sheetBody.innerHTML = '';
+  c.render(sheetBody);
+  overlay.classList.add('show');
+  sheet.classList.add('show');
+  sheetBody.scrollTop = 0;
+}
+function closeCard(){
+  overlay.classList.remove('show');
+  sheet.classList.remove('show');
+}
+overlay.addEventListener('click', closeCard);
+document.getElementById('closeSheet').addEventListener('click', closeCard);
+
+/* ---------------------------------------------------
+   小组件 1：石子一一对应计数器
+---------------------------------------------------- */
+function mountStoneWidget(root){
+  root.innerHTML = `
+    <div style="display:flex; gap:18px; justify-content:center; margin-bottom:10px; font-size:13px; color:#7a6a45;">
+      <div>🐑 出门的羊：<b id="sheepOutCount">0</b></div>
+      <div>⚪ 袋子里的石子：<b id="stoneCount">0</b></div>
+    </div>
+    <div class="pouch" id="pouch"></div>
+    <div class="stonebtns">
+      <button class="btn" id="sheepOut">羊出门 →</button>
+      <button class="btn secondary" id="sheepIn">← 羊回家</button>
+    </div>
+    <div class="counthint" id="stoneHint">试试让几只羊出门，再让它们都回家</div>
+  `;
+  let out = 0, stones = 0;
+  const pouch = root.querySelector('#pouch');
+  const hint = root.querySelector('#stoneHint');
+  root.querySelector('#sheepOut').addEventListener('click', ()=>{
+    out++; stones++;
+    const s = document.createElement('div');
+    s.className = 'stone';
+    pouch.appendChild(s);
+    root.querySelector('#sheepOutCount').textContent = out;
+    root.querySelector('#stoneCount').textContent = stones;
+    hint.textContent = '一只羊出门，放进去一颗石子';
+    hint.className = 'counthint';
+  });
+  root.querySelector('#sheepIn').addEventListener('click', ()=>{
+    if(stones<=0){
+      hint.textContent = '袋子已经空啦，说明羊都回来了！';
+      hint.className = 'counthint good';
+      return;
+    }
+    stones--; out--;
+    pouch.removeChild(pouch.lastElementChild);
+    root.querySelector('#sheepOutCount').textContent = out;
+    root.querySelector('#stoneCount').textContent = stones;
+    hint.textContent = stones===0
+      ? '石子全部拿完，说明羊全都回来了，一只不少！'
+      : `还剩 ${stones} 颗石子，说明还有 ${stones} 只羊没回来`;
+    hint.className = stones===0 ? 'counthint good' : 'counthint bad';
+  });
+}
+
+/* ---------------------------------------------------
+   小组件 2：进位加法 15+28 逐步演示
+---------------------------------------------------- */
+function mountAddWidget(root){
+  let step = 0;
+  const steps = [
+    { line:'先算个位：5 + 8 = 13，个位写 3，向十位进 1', carry:'&nbsp;1', result:'&nbsp;3' },
+    { line:'再算十位：1(进位) + 1 + 2 = 4', carry:'&nbsp;1', result:'43' },
+    { line:'完成！15 + 28 = 43', carry:'&nbsp;1', result:'43' },
+  ];
+  const carryEl = root.querySelector('#addCarry');
+  const resultEl = root.querySelector('#addResult');
+  const lineEl = root.querySelector('#addStepline');
+  function apply(){
+    if(step===0){ carryEl.innerHTML='&nbsp;'; resultEl.textContent='??'; lineEl.textContent='点击"下一步"，跟着小和一起算一算'; return; }
+    const s = steps[step-1];
+    carryEl.innerHTML = s.carry;
+    resultEl.innerHTML = s.result;
+    lineEl.textContent = s.line;
+  }
+  root.querySelector('#addNext').addEventListener('click', ()=>{
+    if(step < steps.length) step++;
+    apply();
+  });
+  root.querySelector('#addReset').addEventListener('click', ()=>{ step=0; apply(); });
+  apply();
+}
+
+/* ---------------------------------------------------
+   小组件 3：退位减法 42-15 逐步演示
+---------------------------------------------------- */
+function mountSubWidget(root){
+  let step = 0;
+  const steps = [
+    { line:'个位 2 不够减 5，向十位借 1，变成 12 − 5 = 7', carry:'borrow', result:'&nbsp;7' },
+    { line:'十位 4 被借走 1，剩 3，再减 1：3 − 1 = 2', carry:'borrow', result:'27' },
+    { line:'完成！42 − 15 = 27', carry:'borrow', result:'27' },
+  ];
+  const carryEl = root.querySelector('#subCarry');
+  const resultEl = root.querySelector('#subResult');
+  const lineEl = root.querySelector('#subStepline');
+  function apply(){
+    if(step===0){ carryEl.innerHTML='&nbsp;'; resultEl.textContent='??'; lineEl.textContent='点击"下一步"，跟着小和一起算一算'; return; }
+    carryEl.innerHTML = '<span style="color:#c94f4f">·借1</span>';
+    resultEl.innerHTML = steps[step-1].result;
+    lineEl.textContent = steps[step-1].line;
+  }
+  root.querySelector('#subNext').addEventListener('click', ()=>{
+    if(step < steps.length) step++;
+    apply();
+  });
+  root.querySelector('#subReset').addEventListener('click', ()=>{ step=0; apply(); });
+  apply();
+}
+
+/* ---------------------------------------------------
+   PWA: 注册 service worker（需通过 http(s) 访问才会生效）
+---------------------------------------------------- */
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
