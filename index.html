@@ -14,455 +14,392 @@
     --sky:#2f6fb0;
     --sky-deep:#1c4a7a;
     --wheat:#e7b957;
-    --wheat-deep:#c8933a;
     --cream:#fbf3e1;
     --ink:#2b2418;
     --paper:#f6ecd2;
     --paper-line:#d9c79a;
-    --terracotta:#c9682f;
-    --good:#4f9d5f;
+    --terracotta:#c9682f;   /* 史 */
+    --guide-orange:#d98c2b; /* 导 */
+    --practice-green:#4f9d5f; /* 练 */
+    --done-blue:#5fa8dd;    /* 已完成统一色 */
     font-family: "PingFang SC","Heiti SC","Microsoft YaHei","HanaMinA",sans-serif;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  html,body{
-    margin:0; padding:0; height:100%; overflow:hidden;
-    background:var(--sky-deep);
-    color:var(--ink);
+  html,body{ margin:0; padding:0; height:100%; overflow:hidden; background:#11151c; color:var(--ink);}
+
+  /* 桌面宽屏下居中显示成一个"手机宽度"的窗口，避免封面图被横向裁剪变形；
+     手机本身视口就窄，这层完全不影响真实手机上的显示效果 */
+  #deviceFrame{
+    position:fixed; inset:0; display:flex; justify-content:center; background:#11151c; overflow:hidden;
   }
-  #app{
-    position:fixed; inset:0;
-    display:flex; flex-direction:column;
-    background:linear-gradient(180deg,#173a5e,#0f1f33 120%);
+  #deviceInner{
+    position:relative; width:100%; max-width:480px; height:100%;
+    background:#000; box-shadow:0 0 50px rgba(0,0,0,.6);
   }
 
-  /* ---------- top bar ---------- */
+  #app{ position:absolute; inset:0; z-index:1; display:flex; flex-direction:column; background:linear-gradient(180deg,#173a5e,#0f1f33 120%);}
+
+  /* ============ 顶部栏 ============ */
   #topbar{
     position:relative; z-index:20;
     display:flex; align-items:center; justify-content:space-between;
-    padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
-    color:#fff;
+    padding:calc(10px + env(safe-area-inset-top)) 14px 8px; color:#fff;
   }
-  #topbar .title{
-    font-size:14px; font-weight:600; opacity:.9;
-    letter-spacing:.5px;
+  #topbar .title{ font-size:14px; font-weight:600; opacity:.9; }
+  #topbar .icons{ display:flex; gap:8px; }
+  .iconbtn{
+    width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.14);
+    display:flex; align-items:center; justify-content:center; font-size:15px; cursor:pointer;
   }
-  #dots{
-    display:flex; gap:5px; justify-content:center; flex:1;
-  }
-  #dots span{
-    width:6px; height:6px; border-radius:50%;
-    background:rgba(255,255,255,.28);
-    transition:all .25s;
-  }
-  #dots span.active{
-    background:var(--wheat); width:16px; border-radius:4px;
-  }
-  #pagecount{ font-size:12px; opacity:.75; min-width:38px; text-align:right;}
+  #pagecount{ font-size:11.5px; opacity:.7; }
 
-  /* ---------- viewer ---------- */
-  #viewer{
-    position:relative; flex:1; overflow:hidden;
-  }
-  #track{
-    position:absolute; inset:0;
-    display:flex;
-    height:100%;
-    transition:transform .38s cubic-bezier(.22,.68,.36,1);
-    will-change:transform;
-  }
-  .page{
-    position:relative;
-    flex:0 0 100%;
-    height:100%;
-    display:flex; align-items:center; justify-content:center;
-  }
-  .page img{
-    max-width:100%; max-height:100%;
-    width:auto; height:auto;
-    object-fit:contain;
-    user-select:none; -webkit-user-drag:none;
-    box-shadow:0 10px 40px rgba(0,0,0,.45);
-  }
+  /* ============ 漫画翻页区 ============ */
+  #viewer{ position:relative; flex:1; overflow:hidden; display:flex; flex-direction:column;}
+  #track{ position:relative; flex:1; display:flex; height:100%; transition:transform .38s cubic-bezier(.22,.68,.36,1); will-change:transform; }
+  .page{ position:relative; flex:0 0 100%; height:100%; display:flex; align-items:center; justify-content:center; }
+  .page img{ max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain; user-select:none; -webkit-user-drag:none; box-shadow:0 10px 40px rgba(0,0,0,.45); }
 
-  /* hotspot */
-  .hotspot{
-    position:absolute;
-    width:36px; height:36px;
-    transform:translate(-50%,-50%);
-    border-radius:50%;
-    border:2px solid #fff;
-    display:flex; align-items:center; justify-content:center;
-    font-size:15px; font-weight:800;
-    color:#fff;
-    cursor:pointer;
-    font-family:"PingFang SC","Microsoft YaHei",sans-serif;
-    animation:pulse-jie 2.2s infinite;
-  }
-  .hotspot:active{ transform:translate(-50%,-50%) scale(.9); }
-
-  /* 解 = 知识解释：蓝色 */
-  .hotspot.type-jie{
-    background:radial-gradient(circle at 35% 30%, #6fa8dd, var(--sky) 60%, var(--sky-deep));
-    animation-name:pulse-jie;
-  }
-  /* 史 = 数学历史：暗红印章风格，双层边框模拟"印章" */
-  .hotspot.type-shi{
-    background:radial-gradient(circle at 35% 30%, #c06a4e, var(--terracotta) 60%, #8a3f1e);
-    box-shadow:inset 0 0 0 2px rgba(255,255,255,.55);
-    animation-name:pulse-shi;
-  }
-  @keyframes pulse-jie{
-    0%{ box-shadow:0 3px 10px rgba(0,0,0,.4), 0 0 0 0 rgba(47,111,176,.55);}
-    70%{ box-shadow:0 3px 10px rgba(0,0,0,.4), 0 0 0 14px rgba(47,111,176,0);}
-    100%{ box-shadow:0 3px 10px rgba(0,0,0,.4), 0 0 0 0 rgba(47,111,176,0);}
-  }
-  @keyframes pulse-shi{
-    0%{ box-shadow:0 3px 10px rgba(0,0,0,.4), inset 0 0 0 2px rgba(255,255,255,.55), 0 0 0 0 rgba(201,104,47,.55);}
-    70%{ box-shadow:0 3px 10px rgba(0,0,0,.4), inset 0 0 0 2px rgba(255,255,255,.55), 0 0 0 14px rgba(201,104,47,0);}
-    100%{ box-shadow:0 3px 10px rgba(0,0,0,.4), inset 0 0 0 2px rgba(255,255,255,.55), 0 0 0 0 rgba(201,104,47,0);}
-  }
-
-  /* 图例（第一次出现时提示两种卡片的区别） */
-  #legend{
-    position:absolute; top:8px; left:50%; transform:translateX(-50%);
-    display:flex; gap:14px; background:rgba(0,0,0,.35); backdrop-filter:blur(3px);
-    padding:6px 14px; border-radius:20px; z-index:16;
-    font-size:11.5px; color:#fff; opacity:0; pointer-events:none; transition:opacity .4s;
-  }
-  #legend.show{ opacity:1; }
-  #legend .item{ display:flex; align-items:center; gap:5px; }
-  #legend .chip{
-    width:18px; height:18px; border-radius:50%; color:#fff; font-size:10px; font-weight:800;
-    display:flex; align-items:center; justify-content:center; border:1.5px solid #fff;
-  }
-  #legend .chip.jie{ background:var(--sky); }
-  #legend .chip.shi{ background:var(--terracotta); }
-
-  /* nav arrows (desktop convenience) */
   .navbtn{
-    position:absolute; top:50%; transform:translateY(-50%);
-    width:38px; height:38px; border-radius:50%;
-    background:rgba(0,0,0,.28); color:#fff;
-    display:flex; align-items:center; justify-content:center;
-    font-size:18px; z-index:15; cursor:pointer; user-select:none;
-    backdrop-filter:blur(2px);
+    position:absolute; top:45%; transform:translateY(-50%); width:36px; height:36px; border-radius:50%;
+    background:rgba(0,0,0,.28); color:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:17px; z-index:15; cursor:pointer; backdrop-filter:blur(2px);
   }
-  #prevBtn{ left:10px; } #nextBtn{ right:10px; }
+  #prevBtn{ left:8px; } #nextBtn{ right:8px; }
   .navbtn.hide{ opacity:0; pointer-events:none; }
 
-  /* swipe hint */
-  #hint{
-    position:absolute; left:0; right:0; bottom:14px;
-    text-align:center; color:rgba(255,255,255,.6); font-size:12px;
-    pointer-events:none; transition:opacity .4s;
+  /* ============ 四按钮工具条 ============ */
+  #toolbar{
+    display:flex; justify-content:center; gap:14px;
+    padding:10px 10px calc(12px + env(safe-area-inset-bottom));
+    background:rgba(0,0,0,.25);
+  }
+  .fourbtn{
+    width:52px; height:52px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:17px; font-weight:800; color:#fff; cursor:pointer;
+    position:relative; transition:transform .15s;
+  }
+  .fourbtn:active{ transform:scale(.92); }
+
+  /* 无内容：幽灵态 */
+  .fourbtn.state-empty{
+    background:transparent; border:2px dashed rgba(255,255,255,.28);
+    color:rgba(255,255,255,.28); cursor:default;
+  }
+  .fourbtn.state-empty:active{ transform:none; }
+
+  /* 待完成：实心彩色 */
+  .fourbtn.state-todo{ border:2px solid rgba(255,255,255,.85); box-shadow:0 3px 10px rgba(0,0,0,.35);}
+  .fourbtn.type-guide.state-todo{ background:radial-gradient(circle at 35% 30%, #f0ad55, var(--guide-orange)); }
+  .fourbtn.type-explain.state-todo{ background:radial-gradient(circle at 35% 30%, #6fa8dd, var(--sky)); }
+  .fourbtn.type-history.state-todo{ background:radial-gradient(circle at 35% 30%, #d98a68, var(--terracotta)); }
+  .fourbtn.type-practice.state-todo{ background:radial-gradient(circle at 35% 30%, #7dc98c, var(--practice-green)); }
+
+  /* 已完成：统一浅蓝 + 打勾 */
+  .fourbtn.state-done{
+    background:radial-gradient(circle at 35% 30%, #a9d4f2, var(--done-blue));
+    border:2px solid #fff;
+  }
+  .fourbtn.state-done .label{ display:none; }
+  .fourbtn.state-done .check{ display:block; }
+  .fourbtn .check{ display:none; font-size:20px; }
+
+  .fourbtn .taglabel{
+    position:absolute; bottom:-16px; left:50%; transform:translateX(-50%);
+    font-size:9.5px; color:rgba(255,255,255,.55); white-space:nowrap;
   }
 
-  /* ---------- knowledge sheet ---------- */
-  #overlay{
-    position:fixed; inset:0; background:rgba(20,15,8,.55);
+  /* ============ 目录 / 总览 overlay ============ */
+  #tocOverlay{
+    position:absolute; inset:0; background:rgba(10,15,25,.94); backdrop-filter:blur(8px); z-index:40;
     opacity:0; pointer-events:none; transition:opacity .25s;
-    z-index:30;
-  }
-  #overlay.show{ opacity:1; pointer-events:auto; }
-
-  #sheet{
-    position:fixed; left:0; right:0; bottom:0;
-    max-height:82%;
-    background:var(--paper);
-    border-radius:20px 20px 0 0;
-    box-shadow:0 -10px 30px rgba(0,0,0,.4);
-    transform:translateY(105%);
-    transition:transform .32s cubic-bezier(.22,.68,.36,1);
-    z-index:31;
-    padding-bottom:env(safe-area-inset-bottom);
     display:flex; flex-direction:column;
+  }
+  #tocOverlay.show{ opacity:1; pointer-events:auto; }
+  #tocHead{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:calc(14px + env(safe-area-inset-top)) 18px 12px; color:#fff;
+  }
+  #tocHead h2{ margin:0; font-size:17px; }
+  #tocList{ flex:1; overflow-y:auto; padding:0 14px 24px; }
+  .tocRow{
+    display:flex; align-items:center; gap:12px; background:rgba(255,255,255,.10);
+    border-radius:14px; padding:12px 14px; margin-bottom:8px; cursor:pointer;
+  }
+  .tocRow.current{ background:rgba(95,168,221,.45); border:1px solid var(--done-blue); }
+  .tocRow .num{ color:#fff; font-size:14px; font-weight:700; width:54px; flex:0 0 auto; }
+  .tocRow .dots{ display:flex; gap:6px; flex:1; }
+  .tocdot{ width:20px; height:20px; border-radius:50%; font-size:9px; font-weight:800; color:#fff; display:flex; align-items:center; justify-content:center; }
+  .tocdot.state-empty{ background:transparent; border:1.5px dashed rgba(255,255,255,.25); color:rgba(255,255,255,.25); }
+  .tocdot.type-guide.state-todo{ background:var(--guide-orange); }
+  .tocdot.type-explain.state-todo{ background:var(--sky); }
+  .tocdot.type-history.state-todo{ background:var(--terracotta); }
+  .tocdot.type-practice.state-todo{ background:var(--practice-green); }
+  .tocdot.state-done{ background:var(--done-blue); }
+
+  /* ============ 知识卡 sheet ============ */
+  #overlay{ position:absolute; inset:0; background:rgba(20,15,8,.55); opacity:0; pointer-events:none; transition:opacity .25s; z-index:30; }
+  #overlay.show{ opacity:1; pointer-events:auto; }
+  #sheet{
+    position:absolute; left:0; right:0; bottom:0; max-height:82%;
+    background:var(--paper); border-radius:20px 20px 0 0; box-shadow:0 -10px 30px rgba(0,0,0,.4);
+    transform:translateY(105%); transition:transform .32s cubic-bezier(.22,.68,.36,1); z-index:31;
+    padding-bottom:env(safe-area-inset-bottom); display:flex; flex-direction:column;
     background-image: repeating-linear-gradient(var(--paper) 0 27px, var(--paper-line) 27px 28px);
     background-attachment:local;
   }
   #sheet.show{ transform:translateY(0); }
-  #sheet .grabber{
-    width:38px; height:4px; border-radius:2px; background:var(--paper-line);
-    margin:10px auto 4px;
-  }
-  #sheetHead{
-    display:flex; align-items:flex-start; gap:10px;
-    padding:10px 20px 4px;
-  }
+  #sheet .grabber{ width:38px; height:4px; border-radius:2px; background:var(--paper-line); margin:10px auto 4px; }
+  #sheetHead{ display:flex; align-items:flex-start; gap:10px; padding:10px 20px 4px; }
   #sheetHead .badge{
-    flex:0 0 auto; width:34px; height:34px; border-radius:10px;
-    background:var(--sky); color:#fff; font-size:16px; font-weight:800;
-    display:flex; align-items:center; justify-content:center;
-    box-shadow:0 3px 0 var(--sky-deep);
+    flex:0 0 auto; width:34px; height:34px; border-radius:10px; color:#fff; font-size:16px; font-weight:800;
+    display:flex; align-items:center; justify-content:center; box-shadow:0 3px 0 rgba(0,0,0,.25);
   }
-  #sheetHead .badge.type-shi{ background:var(--terracotta); box-shadow:0 3px 0 #8a3f1e; }
+  #sheetHead .badge.type-guide{ background:var(--guide-orange); }
+  #sheetHead .badge.type-explain{ background:var(--sky); }
+  #sheetHead .badge.type-history{ background:var(--terracotta); }
+  #sheetHead .badge.type-practice{ background:var(--practice-green); }
+  #sheetTitleWrap{ flex:1; }
   #sheetTitle{ font-size:19px; font-weight:800; color:var(--ink); line-height:1.3; padding-top:4px;}
-  #closeSheet{
-    margin-left:auto; width:28px; height:28px; border-radius:50%;
-    background:rgba(0,0,0,.08); display:flex; align-items:center; justify-content:center;
-    font-size:14px; color:#665; flex:0 0 auto; cursor:pointer;
+  #sheetTag{ display:inline-block; font-size:12px; color:#7a5f30; background:rgba(0,0,0,.06); padding:2px 9px; border-radius:20px; margin-top:6px; font-weight:600;}
+  #speakBtn{
+    flex:0 0 auto; width:34px; height:34px; border-radius:50%; background:var(--terracotta); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:15px; cursor:pointer; margin-top:2px;
   }
-  #sheetBody{
-    padding:6px 20px 26px; overflow-y:auto; font-size:15px; line-height:1.75; color:#3a2f1e;
-  }
+  #speakBtn.speaking{ animation:speakPulse 1s infinite; }
+  @keyframes speakPulse{ 0%,100%{opacity:1;} 50%{opacity:.55;} }
+  #closeSheet{ margin-left:4px; width:28px; height:28px; border-radius:50%; background:rgba(0,0,0,.08); display:flex; align-items:center; justify-content:center; font-size:14px; color:#665; flex:0 0 auto; cursor:pointer;}
+  #sheetBody{ padding:6px 20px 30px; overflow-y:auto; font-size:15px; line-height:1.8; color:#3a2f1e; }
   #sheetBody p{ margin:0 0 12px; }
-  #sheetBody .tag{
-    display:inline-block; font-size:12px; color:var(--terracotta);
-    background:rgba(201,104,47,.12); padding:2px 9px; border-radius:20px;
-    margin-bottom:10px; font-weight:600;
-  }
 
-  /* ---- widget: step reveal (加减法) ---- */
-  .stepbox{
-    background:#fffef8; border:1.5px solid var(--paper-line); border-radius:12px;
-    padding:14px; margin:10px 0 14px;
-  }
-  .vcalc{
-    font-family:"SF Mono",Consolas,monospace; font-size:26px; text-align:right;
-    letter-spacing:2px; line-height:1.5; width:120px; margin:0 auto 10px;
-    position:relative;
-  }
+  .stepbox{ background:#fffef8; border:1.5px solid var(--paper-line); border-radius:12px; padding:14px; margin:10px 0 14px; }
+  .vcalc{ font-family:"SF Mono",Consolas,monospace; font-size:26px; text-align:right; letter-spacing:2px; line-height:1.5; width:120px; margin:0 auto 10px; }
   .vcalc .line{ border-top:2.5px solid var(--ink); margin-top:2px; }
-  .vcalc .carry{ font-size:13px; color:var(--terracotta); height:16px; text-align:left; letter-spacing:8px;}
-  .stepline{
-    font-size:14px; color:#5b4c33; min-height:20px; text-align:center; margin-bottom:10px;
-  }
+  .stepline{ font-size:14px; color:#5b4c33; min-height:20px; text-align:center; margin-bottom:10px; }
   .stepbtns{ display:flex; gap:10px; justify-content:center; }
-  .btn{
-    appearance:none; border:none; border-radius:10px;
-    background:var(--sky); color:#fff; font-size:14px; font-weight:600;
-    padding:9px 16px; cursor:pointer; box-shadow:0 3px 0 var(--sky-deep);
-  }
+  .btn{ appearance:none; border:none; border-radius:10px; background:var(--sky); color:#fff; font-size:14px; font-weight:600; padding:9px 16px; cursor:pointer; box-shadow:0 3px 0 var(--sky-deep); }
   .btn:active{ transform:translateY(2px); box-shadow:0 1px 0 var(--sky-deep); }
   .btn.secondary{ background:#efe4c4; color:#7a5f30; box-shadow:0 3px 0 #cbb886; }
+  .btn.practice-reveal{ background:var(--practice-green); box-shadow:0 3px 0 #326b3d; }
 
-  /* ---- widget: stone counting ---- */
-  .stonewrap{
-    background:#fffef8; border:1.5px solid var(--paper-line); border-radius:12px;
-    padding:16px; margin:10px 0 14px; text-align:center;
-  }
-  .pouch{
-    min-height:54px; border:2px dashed #b79a5a; border-radius:12px;
-    display:flex; flex-wrap:wrap; align-items:center; justify-content:center;
-    gap:6px; padding:8px; margin-bottom:12px; background:#faf4e2;
-  }
-  .stone{
-    width:16px; height:16px; border-radius:50%;
-    background:radial-gradient(circle at 35% 30%,#9a9a9a,#5c5c5c);
-    box-shadow:inset 0 -2px 2px rgba(0,0,0,.3);
-    animation:pop .25s ease;
-  }
-  @keyframes pop{ from{ transform:scale(0);} to{ transform:scale(1);} }
-  .stonebtns{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
-  .counthint{ font-size:13px; color:#7a6a45; margin-top:10px; min-height:18px; font-weight:600;}
-  .counthint.good{ color:var(--good); }
-  .counthint.bad{ color:#c94f4f; }
+  .practice-answer{ margin-top:10px; padding:12px; background:#eef7ee; border:1.5px dashed var(--practice-green); border-radius:10px; font-size:14px; color:#2f5f38; display:none; }
+  .practice-answer.show{ display:block; }
 
-  #installTip{
-    position:fixed; left:14px; right:14px; bottom:calc(14px + env(safe-area-inset-bottom));
-    background:rgba(0,0,0,.75); color:#fff; font-size:12.5px; line-height:1.5;
-    padding:10px 14px; border-radius:12px; z-index:5; display:none;
+  /* ============ 封面 ============ */
+  #coverScreen{
+    position:absolute; inset:0; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+    background:#000; overflow:hidden;
   }
+  #coverScreen img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  #coverFade{ position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(10,15,25,.92) 100%);}
+  #coverContent{ position:relative; z-index:2; padding:0 24px calc(40px + env(safe-area-inset-bottom)); text-align:center; width:100%;}
+  #coverContent h1{ color:#fff; font-size:22px; margin:0 0 18px; text-shadow:0 2px 8px rgba(0,0,0,.5); }
+  #startBtn{
+    background:var(--wheat); color:#4a2e0a; border:none; border-radius:30px; padding:14px 40px;
+    font-size:16px; font-weight:800; box-shadow:0 4px 0 #c8933a; cursor:pointer;
+  }
+  #startBtn:active{ transform:translateY(2px); box-shadow:0 2px 0 #c8933a; }
+
+  audio{ display:none; }
+
+  /* ============ 新手引导 overlay ============ */
+  #onboardOverlay{
+    position:absolute; inset:0; z-index:50; display:flex; flex-direction:column;
+    background:linear-gradient(180deg,#1c4a7a,#0f1f33 70%);
+    opacity:0; pointer-events:none; transition:opacity .3s;
+  }
+  #onboardOverlay.show{ opacity:1; pointer-events:auto; }
+  #onboardTop{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:calc(14px + env(safe-area-inset-top)) 16px 6px;
+  }
+  #onboardDots{ display:flex; gap:6px; flex:1; justify-content:center; }
+  #onboardDots span{ width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.28); transition:all .25s; }
+  #onboardDots span.active{ background:var(--wheat); width:16px; border-radius:4px; }
+  #onboardSkip{ font-size:13px; color:rgba(255,255,255,.65); padding:4px 8px; cursor:pointer; }
+
+  #onboardBody{ flex:1; overflow-y:auto; padding:6px 26px 10px; display:flex; flex-direction:column; align-items:center; text-align:center; }
+  #onboardBody .charimg{
+    width:180px; height:180px; border-radius:50%; object-fit:cover; object-position:center center;
+    border:3px solid rgba(255,255,255,.5); box-shadow:0 8px 24px rgba(0,0,0,.35);
+    margin:10px 0 18px; background:#dcefff;
+  }
+  #onboardBody .obBadge{
+    display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:9px;
+    color:#fff; font-weight:800; font-size:14px; margin-bottom:10px; box-shadow:0 3px 0 rgba(0,0,0,.25);
+  }
+  #onboardBody .obBadge.type-guide{ background:var(--guide-orange); }
+  #onboardBody .obBadge.type-explain{ background:var(--sky); }
+  #onboardBody .obBadge.type-history{ background:var(--terracotta); }
+  #onboardBody .obBadge.type-practice{ background:var(--practice-green); }
+
+  #onboardBody h3{ color:#fff; font-size:19px; margin:0 0 12px; line-height:1.4; }
+  #onboardBody p{ color:rgba(255,255,255,.88); font-size:15px; line-height:1.75; margin:0 0 16px; }
+
+  .obDemoHint{ font-size:12.5px; color:var(--wheat); margin-bottom:10px; cursor:pointer; text-decoration:underline; }
+  .obDemoBox{
+    width:100%; max-width:300px; background:var(--paper); border-radius:14px; padding:14px 16px;
+    margin-bottom:16px; display:none; text-align:left; color:#3a2f1e; font-size:14px; line-height:1.7;
+    box-shadow:0 6px 18px rgba(0,0,0,.3);
+  }
+  .obDemoBox.show{ display:block; }
+  .obDemoBox .demoTitle{ font-weight:800; color:var(--ink); margin-bottom:6px; font-size:14.5px; }
+  .obSpeakRow{ display:flex; align-items:center; gap:8px; }
+  .obSpeakBtn{
+    width:30px; height:30px; border-radius:50%; background:var(--terracotta); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:14px; cursor:pointer; flex:0 0 auto;
+  }
+  .obPracticeOpts{ display:flex; gap:10px; margin-top:8px; }
+  .obPracticeOpts button{
+    flex:1; appearance:none; border:none; border-radius:10px; background:var(--sky); color:#fff;
+    font-size:14px; font-weight:700; padding:10px 0; cursor:pointer; box-shadow:0 3px 0 var(--sky-deep);
+  }
+  .obFeedback{ margin-top:10px; font-size:13.5px; color:var(--good); font-weight:700; display:none; }
+  .obFeedback.show{ display:block; }
+
+  #onboardBottom{ padding:10px 26px calc(20px + env(safe-area-inset-bottom)); }
+  #onboardCta{
+    width:100%; background:var(--wheat); color:#4a2e0a; border:none; border-radius:26px; padding:14px 0;
+    font-size:15.5px; font-weight:800; box-shadow:0 4px 0 #c8933a; cursor:pointer;
+  }
+  #onboardCta:active{ transform:translateY(2px); box-shadow:0 2px 0 #c8933a; }
 </style>
 </head>
 <body>
-<div id="app">
+<div id="deviceFrame"><div id="deviceInner">
 
+<div id="coverScreen">
+  <img src="images/cover.png" alt="封面">
+  <div id="coverFade"></div>
+  <div id="coverContent">
+    <h1>小和的奇妙数学之旅</h1>
+    <button id="startBtn">开始阅读</button>
+  </div>
+</div>
+
+<div id="app">
   <div id="topbar">
+    <div class="icons">
+      <div class="iconbtn" id="tocBtn">☰</div>
+      <div class="iconbtn" id="helpBtn">?</div>
+    </div>
     <div class="title">小和的奇妙数学之旅</div>
-    <div id="dots"></div>
-    <div id="pagecount">1 / 8</div>
+    <div id="pagecount">1 / 10</div>
   </div>
 
   <div id="viewer">
     <div id="track"></div>
     <div class="navbtn" id="prevBtn">‹</div>
     <div class="navbtn" id="nextBtn">›</div>
-    <div id="legend">
-      <div class="item"><span class="chip shi">史</span>数学历史</div>
-      <div class="item"><span class="chip jie">解</span>知识讲解</div>
-    </div>
-    <div id="hint">左右滑动翻页 · 点击圆点查看知识卡</div>
   </div>
 
+  <div id="toolbar"></div>
+</div>
+
+<div id="tocOverlay">
+  <div id="tocHead"><h2>目录</h2><div class="iconbtn" id="tocClose">✕</div></div>
+  <div id="tocList"></div>
 </div>
 
 <div id="overlay"></div>
 <div id="sheet">
   <div class="grabber"></div>
   <div id="sheetHead">
-    <div class="badge type-jie">解</div>
-    <div id="sheetTitle">知识讲解</div>
+    <div class="badge" id="sheetBadge">导</div>
+    <div id="sheetTitleWrap">
+      <div id="sheetTitle"></div>
+      <div id="sheetTag" style="display:none;"></div>
+    </div>
+    <div id="speakBtn" style="display:none;">🔊</div>
     <div id="closeSheet">✕</div>
   </div>
   <div id="sheetBody"></div>
 </div>
 
+<audio id="sfxComplete" src="audio/sfx/complete.mp3" preload="auto"></audio>
+
+<div id="onboardOverlay">
+  <div id="onboardTop">
+    <div id="onboardDots"></div>
+    <div id="onboardSkip">跳过</div>
+  </div>
+  <div id="onboardBody"></div>
+  <div id="onboardBottom"><button id="onboardCta"></button></div>
+</div>
+
+</div></div>
+<!-- /deviceInner /deviceFrame -->
+
+<!-- ============ 内容数据（按页加载，见 content/ 文件夹） ============ -->
 <script>
-/* ---------------------------------------------------
-   数据：页面 + 知识点热区
-   （demo 只在第 6、7 页放了示例热区，展示交互形式）
----------------------------------------------------- */
-const PAGES = [
-  { src:'images/page-1.jpg', hotspots:[] }, // 封面
-  { src:'images/page-2.jpg', hotspots:[] },
-  { src:'images/page-3.jpg', hotspots:[] },
-  { src:'images/page-4.jpg', hotspots:[] },
-  { src:'images/page-5.jpg', hotspots:[] },
-  { src:'images/page-6.jpg', hotspots:[] },
-  { src:'images/page-7.jpg', hotspots:[
-      { x:88, y:48, type:'jie', card:'oneToOne' },
-      { x:88, y:81, type:'shi', card:'tokenHistory' },
-    ]},
-  { src:'images/page-8.jpg', hotspots:[
-      { x:88, y:15, type:'jie', card:'addCarry' },
-      { x:88, y:48, type:'jie', card:'subBorrow' },
-      { x:88, y:81, type:'shi', card:'placeValueHistory' },
-    ]},
+window.PAGE_CONTENT = {};
+window.PAGE_IDS = ['P01','P02','P03','P04','P05','P06','P07','P08','P09','P10'];
+</script>
+<script src="content/P01.js"></script>
+<script src="content/P02.js"></script>
+<script src="content/P03.js"></script>
+<script src="content/P04.js"></script>
+<script src="content/P05.js"></script>
+<script src="content/P06.js"></script>
+<script src="content/P07.js"></script>
+<script src="content/P08.js"></script>
+<script src="content/P09.js"></script>
+<script src="content/P10.js"></script>
+
+<!-- ============ 引擎代码 ============ -->
+<script>
+const TYPES = [
+  { key:'guide',    cls:'type-guide',    label:'导' },
+  { key:'explain',  cls:'type-explain',  label:'解' },
+  { key:'history',  cls:'type-history',  label:'史' },
+  { key:'practice', cls:'type-practice', label:'练' },
 ];
+const STORAGE_KEY = 'xiaohe_progress_v1';
+const PAGES = window.PAGE_IDS.map(id => window.PAGE_CONTENT[id]);
 
-const CARDS = {
+/* ---------- 进度存取 ---------- */
+function loadProgress(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return { lastPage: 0, completed: {} };
+}
+function saveProgress(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); }catch(e){}
+}
+let progress = loadProgress();
 
-  /* ============ 解：知识讲解（原理/怎么算） ============ */
+function isDone(id){ return !!progress.completed[id]; }
+function markDone(id){
+  if(!id || progress.completed[id]) return;
+  progress.completed[id] = true;
+  saveProgress();
+}
 
-  oneToOne:{
-    type:'jie',
-    title:'一一对应：不用数数也能比多少',
-    tag:'知识讲解 · 计数的原理',
-    render(body){
-      body.innerHTML = `
-        <p>小和让每只羊出门时都放一颗石子进袋子——这就是数学里最基本的思想之一：<b>一一对应</b>。</p>
-        <p>一只羊对应一颗石子，石子和羊的数量就"绑"在了一起。只要这个对应关系没被破坏，两边的数量就一定相等——哪怕小和压根不会数数、不知道到底是"38只"还是"39只"，也完全不耽误她判断羊有没有少。</p>
-        <p>动手试试下面的小袋子——点"羊出门"放一颗石子，点"羊回家"拿走一颗，看看石子还剩多少颗：</p>
-        <div class="stonewrap" id="stoneWidget"></div>
-      `;
-      mountStoneWidget(body.querySelector('#stoneWidget'));
-    }
-  },
-
-  addCarry:{
-    type:'jie',
-    title:'进位加法：15 + 28',
-    tag:'知识讲解 · 加法竖式',
-    render(body){
-      body.innerHTML = `
-        <p>把两个数字按位对齐，从<b>个位</b>开始算起，满十就往前一位"进 1"：</p>
-        <div class="stepbox">
-          <div class="vcalc" id="addCalc">
-            <div class="carry" id="addCarry">&nbsp;</div>
-            <div>15</div>
-            <div>+28</div>
-            <div class="line"></div>
-            <div id="addResult">??</div>
-          </div>
-          <div class="stepline" id="addStepline">点击"下一步"，跟着小和一起算一算</div>
-          <div class="stepbtns">
-            <button class="btn secondary" id="addReset">重来</button>
-            <button class="btn" id="addNext">下一步</button>
-          </div>
-        </div>
-      `;
-      mountAddWidget(body);
-    }
-  },
-
-  subBorrow:{
-    type:'jie',
-    title:'退位减法：42 − 15',
-    tag:'知识讲解 · 减法竖式',
-    render(body){
-      body.innerHTML = `
-        <p>个位不够减的时候，就向十位"借 1"，借来的 1 在这一位要按十来用：</p>
-        <div class="stepbox">
-          <div class="vcalc" id="subCalc">
-            <div class="carry" id="subCarry">&nbsp;</div>
-            <div>42</div>
-            <div>-15</div>
-            <div class="line"></div>
-            <div id="subResult">??</div>
-          </div>
-          <div class="stepline" id="subStepline">点击"下一步"，跟着小和一起算一算</div>
-          <div class="stepbtns">
-            <button class="btn secondary" id="subReset">重来</button>
-            <button class="btn" id="subNext">下一步</button>
-          </div>
-        </div>
-      `;
-      mountSubWidget(body);
-    }
-  },
-
-  /* ============ 史：数学历史（真实历史考据） ============ */
-
-  tokenHistory:{
-    type:'shi',
-    title:'结绳记账：文字发明之前的"数学"',
-    tag:'数学史 · 计数的起源',
-    render(body){
-      body.innerHTML = `
-        <p>人类最早的数学痕迹不是数字，而是骨头上的刻痕。南非出土的<b>莱邦博骨</b>距今约 4.3 万年，上面刻着 29 道整齐的痕迹，很多学者认为它是用来记录月相或天数的"日历棒"。大约 2 万年前，刚果出土的<b>伊尚戈骨</b>上刻着更复杂的分组痕迹，说明当时的人已经不只是划道道，而是在有意分组、比较数量了。</p>
-        <p>真正和小和的做法几乎一模一样的，是大约公元前 8000 年两河流域（今天的伊拉克一带）的农民和牧民：他们用不同形状的小泥块来记账——一颗泥球代表一份粮食，一个泥锥代表一只羊，装进泥袋子里保存。这套系统直到 20 世纪才被考古学家丹妮丝·施曼特-贝瑟拉破解出来。</p>
-        <p>更神奇的是：大约公元前 3200 年，人们开始把这些泥块的形状直接印在泥板上做记录，这些印记后来演变成了<b>楔形文字</b>——人类最早的文字之一。也就是说，人类是先学会了"记数"，很久很久以后才发明了"写字"。</p>
-      `;
-    }
-  },
-
-  placeValueHistory:{
-    type:'shi',
-    title:'从印度到欧洲：竖式算法走了 1500 年',
-    tag:'数学史 · 位值计数法',
-    render(body){
-      body.innerHTML = `
-        <p>我们今天用的"个位、十位、逢十进一"，数学上叫<b>十进位值制</b>——数字所在的位置决定了它的价值。这套系统是公元 5～7 世纪由印度数学家逐渐发展成熟的：天文学家阿耶波多（约公元 476 年生）的著作里已经用到了位值记数法；大约公元 628 年，数学家婆罗摩笈多第一次系统写下了"0"该怎么作为一个真正的数字参与加减运算。</p>
-        <p>公元 9 世纪，阿拉伯数学家<b>花拉子米</b>把这套方法写成专著介绍给伊斯兰世界，后来这本书被翻译成拉丁文传入欧洲——"算法"（algorithm）这个词，就来自他名字的拉丁拼写。</p>
-        <p>1202 年，意大利数学家<b>斐波那契</b>出版《计算之书》，系统地把这套数字和竖式运算方法介绍给欧洲商人，才逐渐取代了此前又笨重又难心算的罗马数字。</p>
-        <p>换句话说，小和和哥哥在牧场上"发明"的这套竖式算法，人类实际上足足摸索、传播了一千五百多年才变成今天课本里的样子。</p>
-      `;
-    }
-  }
-};
-
-/* ---------------------------------------------------
-   翻页逻辑
----------------------------------------------------- */
+/* ---------- 翻页 ---------- */
 const track = document.getElementById('track');
-const dotsEl = document.getElementById('dots');
 const pagecountEl = document.getElementById('pagecount');
-let current = 0;
+let current = Math.min(progress.lastPage || 0, PAGES.length - 1);
 
-PAGES.forEach((p, i) => {
+PAGES.forEach(p => {
   const div = document.createElement('div');
   div.className = 'page';
   const img = document.createElement('img');
-  img.src = p.src;
+  img.src = p.image;
   img.draggable = false;
   div.appendChild(img);
-  p.hotspots.forEach(h => {
-    const dot = document.createElement('div');
-    dot.className = 'hotspot type-' + h.type;
-    dot.style.left = h.x + '%';
-    dot.style.top = h.y + '%';
-    dot.textContent = h.type === 'shi' ? '史' : '解';
-    dot.addEventListener('click', (e) => { e.stopPropagation(); openCard(h.card); });
-    div.appendChild(dot);
-  });
   track.appendChild(div);
-
-  const dot = document.createElement('span');
-  dotsEl.appendChild(dot);
 });
 
 function render(){
   track.style.transform = `translateX(-${current*100}%)`;
-  [...dotsEl.children].forEach((d,i)=>d.classList.toggle('active', i===current));
   pagecountEl.textContent = `${current+1} / ${PAGES.length}`;
   document.getElementById('prevBtn').classList.toggle('hide', current===0);
   document.getElementById('nextBtn').classList.toggle('hide', current===PAGES.length-1);
-  const legend = document.getElementById('legend');
-  if(PAGES[current].hotspots.length){
-    legend.classList.add('show');
-  } else {
-    legend.classList.remove('show');
-  }
+  renderToolbar();
+  progress.lastPage = current;
+  saveProgress();
 }
 function goTo(i){
   current = Math.max(0, Math.min(PAGES.length-1, i));
@@ -475,14 +412,11 @@ window.addEventListener('keydown', (e)=>{
   if(e.key==='ArrowLeft') goTo(current-1);
 });
 
-/* touch swipe */
-let touchStartX = null, touchStartY = null, dragging=false;
+let touchStartX=null, touchStartY=null, dragging=false;
 const viewer = document.getElementById('viewer');
 viewer.addEventListener('touchstart', e=>{
-  touchStartX = e.touches[0].clientX;
-  touchStartY = e.touches[0].clientY;
-  dragging = true;
-  track.style.transition = 'none';
+  touchStartX=e.touches[0].clientX; touchStartY=e.touches[0].clientY; dragging=true;
+  track.style.transition='none';
 },{passive:true});
 viewer.addEventListener('touchmove', e=>{
   if(!dragging) return;
@@ -491,159 +425,367 @@ viewer.addEventListener('touchmove', e=>{
 },{passive:true});
 viewer.addEventListener('touchend', e=>{
   if(!dragging) return;
-  dragging = false;
-  track.style.transition = '';
+  dragging=false; track.style.transition='';
   const dx = e.changedTouches[0].clientX - touchStartX;
   const dy = e.changedTouches[0].clientY - touchStartY;
   if(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)){
-    if(dx < 0) goTo(current+1); else goTo(current-1);
-  } else {
-    render();
-  }
+    if(dx<0) goTo(current+1); else goTo(current-1);
+  } else render();
 });
 
-/* hide hint after a while */
-setTimeout(()=>{ document.getElementById('hint').style.opacity = 0; }, 3500);
+/* ---------- 四按钮工具条 ---------- */
+const toolbar = document.getElementById('toolbar');
+function buttonState(pageData, typeKey){
+  const data = pageData[typeKey];
+  if(!data) return 'empty';
+  return isDone(data.id) ? 'done' : 'todo';
+}
+function renderToolbar(){
+  const pageData = PAGES[current];
+  toolbar.innerHTML = '';
+  TYPES.forEach(t => {
+    const data = pageData[t.key];
+    const state = buttonState(pageData, t.key);
+    const btn = document.createElement('div');
+    btn.className = `fourbtn ${t.cls} state-${state}`;
+    btn.innerHTML = `<span class="label">${t.label}</span><span class="check">✓</span>`;
+    if(state !== 'empty'){
+      btn.addEventListener('click', ()=> openCard(t.key, data));
+    }
+    toolbar.appendChild(btn);
+  });
+}
 
-render();
-
-/* ---------------------------------------------------
-   知识卡 sheet
----------------------------------------------------- */
+/* ---------- 知识卡 sheet ---------- */
 const overlay = document.getElementById('overlay');
 const sheet = document.getElementById('sheet');
+const sheetBadge = document.getElementById('sheetBadge');
 const sheetTitle = document.getElementById('sheetTitle');
+const sheetTag = document.getElementById('sheetTag');
 const sheetBody = document.getElementById('sheetBody');
+const speakBtn = document.getElementById('speakBtn');
+const sfxComplete = document.getElementById('sfxComplete');
 
-const sheetBadge = document.querySelector('#sheetHead .badge');
-function openCard(id){
-  const c = CARDS[id];
-  if(!c) return;
-  sheetBadge.className = 'badge type-' + c.type;
-  sheetBadge.textContent = c.type === 'shi' ? '史' : '解';
-  sheetTitle.innerHTML = `${c.title}${c.tag ? `<br><span class="tag">${c.tag}</span>` : ''}`;
+const TYPE_MAP = { guide:{cls:'type-guide',label:'导'}, explain:{cls:'type-explain',label:'解'}, history:{cls:'type-history',label:'史'}, practice:{cls:'type-practice',label:'练'} };
+
+function openCard(typeKey, data){
+  const meta = TYPE_MAP[typeKey];
+  sheetBadge.className = 'badge ' + meta.cls;
+  sheetBadge.textContent = meta.label;
+  sheetTitle.textContent = data.title || '';
+  if(data.tag){ sheetTag.style.display='inline-block'; sheetTag.textContent = data.tag; }
+  else sheetTag.style.display='none';
+
   sheetBody.innerHTML = '';
-  c.render(sheetBody);
+
+  if(typeKey === 'guide' || typeKey === 'history'){
+    (data.body||'').split('\n\n').forEach(para=>{
+      if(!para.trim()) return;
+      const p = document.createElement('p');
+      p.textContent = para;
+      sheetBody.appendChild(p);
+    });
+  }
+
+  if(typeKey === 'explain'){
+    if(data.calc){ renderStepCalc(sheetBody, data.calc); }
+    else if(data.body){
+      const p = document.createElement('p'); p.textContent = data.body; sheetBody.appendChild(p);
+    }
+  }
+
+  if(typeKey === 'practice'){
+    const q = document.createElement('p');
+    q.textContent = data.question || '';
+    sheetBody.appendChild(q);
+    if(data.answer){
+      const revealBtn = document.createElement('button');
+      revealBtn.className = 'btn practice-reveal';
+      revealBtn.textContent = '看看答案对不对';
+      const ansBox = document.createElement('div');
+      ansBox.className = 'practice-answer';
+      ansBox.textContent = '答案：' + data.answer;
+      revealBtn.addEventListener('click', ()=>{ ansBox.classList.add('show'); });
+      sheetBody.appendChild(revealBtn);
+      sheetBody.appendChild(ansBox);
+    }
+  }
+
+  // 朗读按钮：只有"史"给（也可扩展到"导"）
+  if(typeKey === 'history' && 'speechSynthesis' in window){
+    speakBtn.style.display = 'flex';
+    speakBtn.onclick = ()=> speak(data.body || '');
+  } else {
+    speakBtn.style.display = 'none';
+    window.speechSynthesis && window.speechSynthesis.cancel();
+  }
+
   overlay.classList.add('show');
   sheet.classList.add('show');
   sheetBody.scrollTop = 0;
+
+  // 完成规则：导/史/解/练 —— 点开即算完成
+  const wasNew = !isDone(data.id);
+  markDone(data.id);
+  renderToolbar();
+  // 只有"解/练"给庆祝音效，且只在第一次完成时响一次，避免每次重新打开都响
+  if(wasNew && (typeKey==='explain' || typeKey==='practice')){
+    try{ sfxComplete.currentTime = 0; sfxComplete.play(); }catch(e){}
+  }
 }
 function closeCard(){
   overlay.classList.remove('show');
   sheet.classList.remove('show');
+  window.speechSynthesis && window.speechSynthesis.cancel();
+  speakBtn.classList.remove('speaking');
 }
 overlay.addEventListener('click', closeCard);
 document.getElementById('closeSheet').addEventListener('click', closeCard);
 
-/* ---------------------------------------------------
-   小组件 1：石子一一对应计数器
----------------------------------------------------- */
-function mountStoneWidget(root){
-  root.innerHTML = `
-    <div style="display:flex; gap:18px; justify-content:center; margin-bottom:10px; font-size:13px; color:#7a6a45;">
-      <div>🐑 出门的羊：<b id="sheepOutCount">0</b></div>
-      <div>⚪ 袋子里的石子：<b id="stoneCount">0</b></div>
+function speak(text){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text.replace(/\n+/g,' '));
+  utter.lang = 'zh-CN';
+  utter.rate = 0.95;
+  utter.onstart = ()=> speakBtn.classList.add('speaking');
+  utter.onend = ()=> speakBtn.classList.remove('speaking');
+  utter.onerror = ()=> speakBtn.classList.remove('speaking');
+  window.speechSynthesis.speak(utter);
+}
+
+/* ---------- "解"竖式演示通用组件（供以后的页面使用） ---------- */
+function renderStepCalc(container, calc){
+  // calc: { op:'add'|'sub', a:15, b:28 }
+  const isAdd = calc.op === 'add';
+  const a = calc.a, b = calc.b;
+  const result = isAdd ? a + b : a - b;
+  const box = document.createElement('div');
+  box.className = 'stepbox';
+  box.innerHTML = `
+    <div class="vcalc">
+      <div class="carry">&nbsp;</div>
+      <div>${a}</div>
+      <div>${isAdd?'+':'-'}${b}</div>
+      <div class="line"></div>
+      <div class="result">??</div>
     </div>
-    <div class="pouch" id="pouch"></div>
-    <div class="stonebtns">
-      <button class="btn" id="sheepOut">羊出门 →</button>
-      <button class="btn secondary" id="sheepIn">← 羊回家</button>
+    <div class="stepline">点击"下一步"，一步一步算一算</div>
+    <div class="stepbtns">
+      <button class="btn secondary reset">重来</button>
+      <button class="btn next">下一步</button>
     </div>
-    <div class="counthint" id="stoneHint">试试让几只羊出门，再让它们都回家</div>
   `;
-  let out = 0, stones = 0;
-  const pouch = root.querySelector('#pouch');
-  const hint = root.querySelector('#stoneHint');
-  root.querySelector('#sheepOut').addEventListener('click', ()=>{
-    out++; stones++;
-    const s = document.createElement('div');
-    s.className = 'stone';
-    pouch.appendChild(s);
-    root.querySelector('#sheepOutCount').textContent = out;
-    root.querySelector('#stoneCount').textContent = stones;
-    hint.textContent = '一只羊出门，放进去一颗石子';
-    hint.className = 'counthint';
-  });
-  root.querySelector('#sheepIn').addEventListener('click', ()=>{
-    if(stones<=0){
-      hint.textContent = '袋子已经空啦，说明羊都回来了！';
-      hint.className = 'counthint good';
-      return;
-    }
-    stones--; out--;
-    pouch.removeChild(pouch.lastElementChild);
-    root.querySelector('#sheepOutCount').textContent = out;
-    root.querySelector('#stoneCount').textContent = stones;
-    hint.textContent = stones===0
-      ? '石子全部拿完，说明羊全都回来了，一只不少！'
-      : `还剩 ${stones} 颗石子，说明还有 ${stones} 只羊没回来`;
-    hint.className = stones===0 ? 'counthint good' : 'counthint bad';
-  });
-}
-
-/* ---------------------------------------------------
-   小组件 2：进位加法 15+28 逐步演示
----------------------------------------------------- */
-function mountAddWidget(root){
+  container.appendChild(box);
+  const resultEl = box.querySelector('.result');
+  const lineEl = box.querySelector('.stepline');
   let step = 0;
-  const steps = [
-    { line:'先算个位：5 + 8 = 13，个位写 3，向十位进 1', carry:'&nbsp;1', result:'&nbsp;3' },
-    { line:'再算十位：1(进位) + 1 + 2 = 4', carry:'&nbsp;1', result:'43' },
-    { line:'完成！15 + 28 = 43', carry:'&nbsp;1', result:'43' },
-  ];
-  const carryEl = root.querySelector('#addCarry');
-  const resultEl = root.querySelector('#addResult');
-  const lineEl = root.querySelector('#addStepline');
   function apply(){
-    if(step===0){ carryEl.innerHTML='&nbsp;'; resultEl.textContent='??'; lineEl.textContent='点击"下一步"，跟着小和一起算一算'; return; }
-    const s = steps[step-1];
-    carryEl.innerHTML = s.carry;
-    resultEl.innerHTML = s.result;
-    lineEl.textContent = s.line;
+    if(step===0){ resultEl.textContent='??'; lineEl.textContent='点击"下一步"，一步一步算一算'; return; }
+    resultEl.textContent = result;
+    lineEl.textContent = step===1 ? '再算下一位……' : `完成！结果是 ${result}`;
   }
-  root.querySelector('#addNext').addEventListener('click', ()=>{
-    if(step < steps.length) step++;
-    apply();
-  });
-  root.querySelector('#addReset').addEventListener('click', ()=>{ step=0; apply(); });
-  apply();
+  box.querySelector('.next').addEventListener('click', ()=>{ if(step<2) step++; apply(); });
+  box.querySelector('.reset').addEventListener('click', ()=>{ step=0; apply(); });
 }
 
-/* ---------------------------------------------------
-   小组件 3：退位减法 42-15 逐步演示
----------------------------------------------------- */
-function mountSubWidget(root){
-  let step = 0;
-  const steps = [
-    { line:'个位 2 不够减 5，向十位借 1，变成 12 − 5 = 7', carry:'borrow', result:'&nbsp;7' },
-    { line:'十位 4 被借走 1，剩 3，再减 1：3 − 1 = 2', carry:'borrow', result:'27' },
-    { line:'完成！42 − 15 = 27', carry:'borrow', result:'27' },
-  ];
-  const carryEl = root.querySelector('#subCarry');
-  const resultEl = root.querySelector('#subResult');
-  const lineEl = root.querySelector('#subStepline');
-  function apply(){
-    if(step===0){ carryEl.innerHTML='&nbsp;'; resultEl.textContent='??'; lineEl.textContent='点击"下一步"，跟着小和一起算一算'; return; }
-    carryEl.innerHTML = '<span style="color:#c94f4f">·借1</span>';
-    resultEl.innerHTML = steps[step-1].result;
-    lineEl.textContent = steps[step-1].line;
-  }
-  root.querySelector('#subNext').addEventListener('click', ()=>{
-    if(step < steps.length) step++;
-    apply();
+/* ---------- 目录 / 总览 ---------- */
+const tocOverlay = document.getElementById('tocOverlay');
+const tocList = document.getElementById('tocList');
+function renderToc(){
+  tocList.innerHTML = '';
+  PAGES.forEach((p, i)=>{
+    const row = document.createElement('div');
+    row.className = 'tocRow' + (i===current ? ' current' : '');
+    const dotsHtml = TYPES.map(t=>{
+      const data = p[t.key];
+      const state = buttonState(p, t.key);
+      return `<div class="tocdot ${t.cls} state-${state}">${state==='done' ? '✓' : t.label}</div>`;
+    }).join('');
+    row.innerHTML = `<div class="num">第 ${i+1} 页</div><div class="dots">${dotsHtml}</div>`;
+    row.addEventListener('click', ()=>{ goTo(i); closeToc(); });
+    tocList.appendChild(row);
   });
-  root.querySelector('#subReset').addEventListener('click', ()=>{ step=0; apply(); });
-  apply();
 }
+function openToc(){ renderToc(); tocOverlay.classList.add('show'); }
+function closeToc(){ tocOverlay.classList.remove('show'); }
+document.getElementById('tocBtn').addEventListener('click', openToc);
+document.getElementById('tocClose').addEventListener('click', closeToc);
 
-/* ---------------------------------------------------
-   PWA: 注册 service worker（需通过 http(s) 访问才会生效）
----------------------------------------------------- */
+/* ---------- PWA: Service Worker ---------- */
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   window.addEventListener('load', ()=>{
     navigator.serviceWorker.register('sw.js').catch(()=>{});
   });
 }
+
+/* ================= 新手引导 ================= */
+const ONBOARD_KEY = 'xiaohe_onboard_seen_v1';
+const onboardOverlay = document.getElementById('onboardOverlay');
+const onboardDots = document.getElementById('onboardDots');
+const onboardBody = document.getElementById('onboardBody');
+const onboardCta = document.getElementById('onboardCta');
+const onboardSkip = document.getElementById('onboardSkip');
+
+const OB_STEPS = [
+  {
+    id:'open', img:'images/onboarding/xiaohe.png',
+    body:'嗨，我是小和！这本书里藏着好多小机关，我来教你怎么用吧——就4个，一下就能记住！',
+    cta:'开始认识 →'
+  },
+  {
+    id:'guide', img:'images/onboarding/xiaohe.png', badge:'导', badgeClass:'type-guide',
+    title:'导',
+    body:'看到这个"导"，就点一下——是我说给带领你读书的爸爸妈妈或老师听的悄悄话，告诉他们接下来该怎么陪你一起读，有时候一次"导"会讲到后面好几页要用的方法哦！',
+    cta:'下一个 →', demo:'guide'
+  },
+  {
+    id:'explain', img:'images/onboarding/axing_explain.png', badge:'解', badgeClass:'type-explain',
+    title:'解',
+    body:'这一页如果出现了算式，点"解"，我会一步一步带你重新算一遍，保证你能看懂！',
+    cta:'下一个 →', demo:'explain'
+  },
+  {
+    id:'history', img:'images/onboarding/axing_history.png', badge:'史', badgeClass:'type-history',
+    title:'史',
+    body:'点"史"，能听到一段真实发生过的数学小故事——我们现在用的数字，其实是好多好多年前的人一点点发明出来的！看到🔊了吗？点一下，我就把这段故事读给你听，不认识的字也没关系啦！',
+    cta:'下一个 →', demo:'history'
+  },
+  {
+    id:'practice', img:'images/onboarding/axing_practice.png', badge:'练', badgeClass:'type-practice',
+    title:'练',
+    body:'学完啦，就该"练"一练！每次做完，都会有一个小小的庆祝——你听——',
+    cta:'最后一步 →', demo:'practice'
+  },
+  {
+    id:'end', img:null,
+    title:'记住啦',
+    body:'亮亮的颜色，说明这里有好玩的东西等着你；打勾变蓝，说明你已经看过啦；灰灰虚线的，说明这一页本来就没有这个哦，不是你漏看了！\n\n对了，不管你今天读到第几页，下次打开我都会记得，直接带你回到上次的地方。想看看自己读到哪儿了，点一下书本图标，就能看到所有页面！',
+    cta:'知道啦，开始读书！'
+  }
+];
+
+let obIndex = 0;
+
+function renderObDots(){
+  onboardDots.innerHTML = '';
+  OB_STEPS.forEach((_, i)=>{
+    const d = document.createElement('span');
+    if(i === obIndex) d.className = 'active';
+    onboardDots.appendChild(d);
+  });
+}
+
+function renderObStep(){
+  const step = OB_STEPS[obIndex];
+  renderObDots();
+  onboardCta.textContent = step.cta || '下一个 →';
+  onboardSkip.style.display = (step.id === 'end') ? 'none' : 'block';
+
+  let html = '';
+  if(step.img) html += `<img class="charimg" src="${step.img}" alt="">`;
+  if(step.badge) html += `<div class="obBadge ${step.badgeClass}">${step.badge}</div>`;
+  if(step.title && step.id === 'end') html += `<h3>${step.title}</h3>`;
+  step.body.split('\n\n').forEach(para=>{
+    html += `<p>${para}</p>`;
+  });
+
+  if(step.demo === 'guide'){
+    html += `<div class="obDemoHint" id="obDemoToggle">点这个徽章试试看</div>
+      <div class="obDemoBox" id="obDemoBox">
+        <div class="demoTitle">带读小提示</div>
+        接下来这几页还没有数学问题，就正常陪孩子读故事就好，不用刻意往数学上引导～
+      </div>`;
+  }
+  if(step.demo === 'explain'){
+    html += `<div class="obDemoHint" id="obDemoToggle">点这个徽章试试看</div>
+      <div class="obDemoBox" id="obDemoBox"><div class="demoTitle">进位加法：3 + 2</div><div id="obCalcMount"></div></div>`;
+  }
+  if(step.demo === 'history'){
+    html += `<div class="obDemoHint" id="obDemoToggle">点这个徽章试试看</div>
+      <div class="obDemoBox" id="obDemoBox">
+        <div class="demoTitle">数字是怎么来的？</div>
+        <div class="obSpeakRow">
+          <div class="obSpeakBtn" id="obSpeakBtn">🔊</div>
+          <div style="flex:1">点小喇叭听听看，这段话能被念出来哦！</div>
+        </div>
+      </div>`;
+  }
+  if(step.demo === 'practice'){
+    html += `<div class="obDemoHint" id="obDemoToggle">点这个徽章试试看</div>
+      <div class="obDemoBox" id="obDemoBox">
+        <div class="demoTitle">1 + 1 = ?</div>
+        <div class="obPracticeOpts">
+          <button data-ans="1">1</button>
+          <button data-ans="2">2</button>
+          <button data-ans="3">3</button>
+        </div>
+        <div class="obFeedback" id="obFeedback">🎉 你听，这就是完成时的声音！</div>
+      </div>`;
+  }
+
+  onboardBody.innerHTML = html;
+
+  const toggle = document.getElementById('obDemoToggle');
+  const box = document.getElementById('obDemoBox');
+  if(toggle && box){
+    toggle.addEventListener('click', ()=>{
+      box.classList.toggle('show');
+      if(step.demo === 'explain' && box.classList.contains('show')){
+        const mount = document.getElementById('obCalcMount');
+        if(mount && !mount.dataset.mounted){
+          renderStepCalc(mount, { op:'add', a:3, b:2 });
+          mount.dataset.mounted = '1';
+        }
+      }
+    });
+  }
+  const obSpeak = document.getElementById('obSpeakBtn');
+  if(obSpeak){
+    obSpeak.addEventListener('click', ()=>{
+      speak('数字不是一开始就有的，是很久很久以前的人一点一点发明出来的哦！');
+    });
+  }
+  const practiceBtns = onboardBody.querySelectorAll('.obPracticeOpts button');
+  practiceBtns.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.getElementById('obFeedback').classList.add('show');
+      try{ sfxComplete.currentTime = 0; sfxComplete.play(); }catch(e){}
+    });
+  });
+}
+
+function obNext(){
+  if(obIndex < OB_STEPS.length - 1){
+    obIndex++;
+    renderObStep();
+  } else {
+    finishOnboarding();
+  }
+}
+function finishOnboarding(){
+  try{ localStorage.setItem(ONBOARD_KEY, '1'); }catch(e){}
+  onboardOverlay.classList.remove('show');
+  window.speechSynthesis && window.speechSynthesis.cancel();
+}
+function openOnboarding(){
+  obIndex = 0;
+  renderObStep();
+  onboardOverlay.classList.add('show');
+}
+
+onboardCta.addEventListener('click', obNext);
+onboardSkip.addEventListener('click', finishOnboarding);
+document.getElementById('helpBtn').addEventListener('click', openOnboarding);
+
+/* 封面"开始阅读"：第一次进入时先看引导，之后直接进书 */
+document.getElementById('startBtn').addEventListener('click', ()=>{
+  document.getElementById('coverScreen').style.display = 'none';
+  render();
+  let seen = false;
+  try{ seen = localStorage.getItem(ONBOARD_KEY) === '1'; }catch(e){}
+  if(!seen) openOnboarding();
+}, { once:false });
 </script>
 </body>
 </html>
